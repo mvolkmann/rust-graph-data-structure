@@ -3,17 +3,14 @@ use std::fmt::Display;
 use std::rc::Rc;
 use std::vec::Vec;
 
-// This is a common combination of types.
-// Rc can't mutate what it holds.
+// This is a common combination of types
+// for holding a reference to a value that can be mutated.
+// Rc cannot mutate what it holds, but
 // RefCell provides "interior mutability" which
 // allows a mutable borrow while immutable borrows exist.
-// Normally this is allowed by the compiler, but using RefCell
-// moves the checking of correct usage to runtime.
+// Normally this is not allowed by the compiler, but using
+// RefCell moves the checking of correct usage to runtime.
 type Wrapper<T> = Rc<RefCell<Node<T>>>;
-
-fn wrap<T: Display>(data: T) -> Wrapper<T> {
-    Rc::new(RefCell::new(Node::new(data)))
-}
 
 #[derive(Debug)]
 struct Node<T> {
@@ -27,25 +24,31 @@ impl<T: Display> Node<T> {
     }
 
     fn new(data: T) -> Node<T> {
-        Node { data, children: Vec::new() }
+        Node { data, children: vec![] }
     }
 
     fn depth_first(&self) {
-        println!("node {}", self.data);
+        println!("{}", self.data);
         for child in &self.children {
+            //let child_node = child.borrow();
+            //child_node.depth_first();
             child.borrow().depth_first();
         }
+    }
+
+    fn wrap(data: T) -> Wrapper<T> {
+        Rc::new(RefCell::new(Node::new(data)))
     }
 }
 
 fn main() {
-    let a = wrap('A');
-    let b = wrap('B');
-    let c = wrap('C');
-    let d = wrap('D');
+    let a = Node::wrap('A');
+    let b = Node::wrap('B');
+    let c = Node::wrap('C');
+    let d = Node::wrap('D');
 
     a.borrow_mut().add_child(Rc::clone(&b));
     a.borrow_mut().add_child(Rc::clone(&c));
     b.borrow_mut().add_child(Rc::clone(&d));
-    a.borrow_mut().depth_first();
+    a.borrow().depth_first();
 }
