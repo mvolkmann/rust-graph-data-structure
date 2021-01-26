@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::fmt::Display;
 use std::vec::Vec;
 
@@ -5,21 +6,21 @@ use std::vec::Vec;
 #[derive(Debug)]
 struct Node<'a, T> {
     data: T,
-    children: Vec<&'a Node<'a, T>>
+    children: RefCell<Vec<&'a Node<'a, T>>>
 }
 
 impl<'a, T: Display> Node<'a, T> {
-    fn add_child(&mut self, child: &'a Node<T>) {
-        self.children.push(child);
+    fn add_child(&mut self, child: &'a Node<'a, T>) {
+        self.children.borrow_mut().push(child);
     }
 
     fn new(data: T) -> Node<'a, T> {
-        Node { data, children: Vec::new() }
+        Node { data, children: RefCell::new(Vec::new()) }
     }
 
     fn depth_first(&self) {
         println!("node {}", self.data);
-        for child in &self.children {
+        for child in self.children.borrow().iter() {
             child.depth_first();
         }
     }
