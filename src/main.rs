@@ -3,6 +3,12 @@ use std::fmt::Display;
 use std::rc::Rc;
 use std::vec::Vec;
 
+// This is a common combination of types.
+// Rc can't mutate what it holds.
+// RefCell provides "interior mutability" which
+// allows a mutable borrow while immutable borrows exist.
+// Normally this is allowed by the compiler, but using RefCell
+// moves the checking of correct usage to runtime.
 type Wrapper<T> = Rc<RefCell<T>>;
 
 fn wrap<T>(data: T) -> Wrapper<T> {
