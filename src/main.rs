@@ -3,38 +3,43 @@ use std::fmt::Display;
 use std::rc::Rc;
 use std::vec::Vec;
 
-// Lifetime annotations must precede generic types in the angle brackets.
-#[derive(Debug)]
-struct Node<'a, T> {
-    data: T,
-    children: RefCell<Vec<&'a Node<'a, T>>>
+type Wrapper<T> = Rc<RefCell<T>>;
+
+fn wrap<T>(data: T) -> Wrapper<T> {
+    Rc::new(RefCell::new(data))
 }
 
-impl<'a, T: Display> Node<'a, T> {
-    fn add_child(&mut self, child: &'a Rc<Node<'a, T>>) {
-        self.children.borrow_mut().push(child);
+#[derive(Debug)]
+struct Node<T> {
+    data: T,
+    children: Vec<Wrapper<Node<T>>>
+}
+
+impl<T: Display> Node<T> {
+    fn add_child(&mut self, child: Wrapper<Node<T>>) {
+        self.children.push(child);
     }
 
-    fn new(data: T) -> Node<'a, T> {
-        Node { data, children: RefCell::new(Vec::new()) }
+    fn new(data: T) -> Node<T> {
+        Node { data, children: Vec::new() }
     }
 
     fn depth_first(&self) {
         println!("node {}", self.data);
-        for child in self.children.borrow().iter() {
-            child.depth_first();
+        for child in self.children.iter() {
+            child.borrow().depth_first();
         }
     }
 }
 
 fn main() {
-    let mut a: Rc<Node<char>> = Rc::new(Node::new('A'));
-    let mut b: Rc<Node<char>> = Rc::new(Node::new('B'));
-    let c: Rc<Node<char>> = Rc::new(Node::new('C'));
-    let d: Rc<Node<char>> = Rc::new(Node::new('D'));
+    let a = wrap(Node::new('A'));
+    let b = wrap(Node::new('B'));
+    let c = wrap(Node::new('C'));
+    let d = wrap(Node::new('D'));
 
-    a.add_child(&Rc::clone(&b));
-    a.add_child(&Rc::clone(&c));
-    b.add_child(&Rc::clone(&d));
-    a.depth_first();
+    a.borrow_mut().add_child(Rc::clone(&b));
+    a.borrow_mut().add_child(Rc::clone(&c));
+    b.borrow_mut().add_child(Rc::clone(&d));
+    a.borrow_mut().depth_first();
 }
