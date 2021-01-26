@@ -9,20 +9,20 @@ use std::vec::Vec;
 // allows a mutable borrow while immutable borrows exist.
 // Normally this is allowed by the compiler, but using RefCell
 // moves the checking of correct usage to runtime.
-type Wrapper<T> = Rc<RefCell<T>>;
+type Wrapper<T> = Rc<RefCell<Node<T>>>;
 
-fn wrap<T>(data: T) -> Wrapper<T> {
-    Rc::new(RefCell::new(data))
+fn wrap<T: Display>(data: T) -> Wrapper<T> {
+    Rc::new(RefCell::new(Node::new(data)))
 }
 
 #[derive(Debug)]
 struct Node<T> {
     data: T,
-    children: Vec<Wrapper<Node<T>>>
+    children: Vec<Wrapper<T>>
 }
 
 impl<T: Display> Node<T> {
-    fn add_child(&mut self, child: Wrapper<Node<T>>) {
+    fn add_child(&mut self, child: Wrapper<T>) {
         self.children.push(child);
     }
 
@@ -32,17 +32,17 @@ impl<T: Display> Node<T> {
 
     fn depth_first(&self) {
         println!("node {}", self.data);
-        for child in self.children.iter() {
+        for child in &self.children {
             child.borrow().depth_first();
         }
     }
 }
 
 fn main() {
-    let a = wrap(Node::new('A'));
-    let b = wrap(Node::new('B'));
-    let c = wrap(Node::new('C'));
-    let d = wrap(Node::new('D'));
+    let a = wrap('A');
+    let b = wrap('B');
+    let c = wrap('C');
+    let d = wrap('D');
 
     a.borrow_mut().add_child(Rc::clone(&b));
     a.borrow_mut().add_child(Rc::clone(&c));
